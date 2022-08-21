@@ -42,6 +42,7 @@ def ex_six_five():
     )
     spark.createDataFrame([{"one": 1, "two": [1, 2, 3]}], schema=dict_schema).show()
 
+
 '''
 ex 6.6
 
@@ -50,16 +51,39 @@ show. Which show had the longest tenure?
 '''
 def ex_six_six():
     three_shows = spark.read.json("../data/shows/shows-*.json", multiLine=True)
-    three_shows.show()
 
-    ## not finish yet
-    times = (
+    return (
         three_shows.select("id", F.explode("_embedded.episodes.airstamp").alias("episode_timestamp"))
+        .withColumn("episode_timestamp", F.to_timestamp("episode_timestamp"))
         .groupby("id")
         .agg(F.min("episode_timestamp").alias("min_timestamp"), F.max("episode_timestamp").alias("max_timestamp"))
-        .withColumn("duration_show", (F.col("max_timestamp").cast("long") - F.col("min_timestamp").cast("long")))
-        .show()
+        .withColumn("duration_show", F.datediff(F.col("max_timestamp"), F.col("min_timestamp")))
+        .show(truncate=False)
     )
 
-    #(F.min(F.col("_embedded.episodes.airstamp")).alias("min_timestamp"),
-    #                   F.max(F.col("_embedded.episodes.airstamp")).alias("max_timestamp")).show()
+
+'''
+Take the shows data frame and extract the air date and name of each episode in two array columns.
+'''
+def ex_six_seven():
+    return (
+        spark.read.json("../data/shows/shows-silicon-valley.json", multiLine=True)
+        .select("_embedded.episodes.airdate", "_embedded.episodes.name")
+        .show(truncate=False)
+    )
+
+
+'''
+Given the following data frame, create a new data frame that contains a single map
+from one to square:
+exo6_8 = spark.createDataFrame([[1, 2], [2, 4], [3, 9]], ["one", "square"])
+'''
+def ex_six_eight():
+    return (
+        spark.createDataFrame([[1, 2], [2, 4], [3, 9]], ["one", "square"])
+        .groupby()
+        .agg(F.collect_list("one").alias("keys"), F.collect_list("square").alias("values"))
+        .select(F.map_from_arrays("keys", "values").alias("number to number squared"))
+        .show(truncate=False)
+    )
+
