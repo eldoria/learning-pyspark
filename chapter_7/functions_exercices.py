@@ -1,5 +1,3 @@
-from pyspark.sql import DataFrame
-
 from setup import *
 from lesson import full_data
 
@@ -115,3 +113,51 @@ def ex_seven_three():
         """
     ).show(20)
 
+
+'''
+What is the total capacity (in TB) that Backblaze records at the beginning of each month?
+'''
+def ex_seven_four_only_sql():
+    full_data.createTempView("drive_stats")
+
+    return spark.sql(
+        """
+        select date, sum(capacity_bytes) / pow(1024, 4) as total_capacity
+        from drive_stats
+        where substring(date, 9, 2) = "01"
+        group by date
+        order by date
+        """
+    ).show()
+
+
+def ex_seven_four_only_pyspark():
+    return (
+        full_data
+        .selectExpr("date", "capacity_bytes")
+        .where(F.substring(F.col("date"), 9, 2) == '01')
+        .groupby("date")
+        .agg(
+            (F.sum(F.col("capacity_bytes")) / pow(1024, 4)).alias("total_capacity")
+        )
+        .orderBy(F.col("date").asc())
+        .selectExpr("date", "total_capacity")
+    ).show()
+
+
+'''
+NOTE: There is a much more elegant way to solve this problem that we see in chapter 10 using window functions. 
+In the meantime, this exercise can be solved with the judicious usage of group bys and joins.
+
+If you look at the data, you’ll see that some drive models can report an erroneous capacity. In the data preparation 
+stage, restage the full_data data frame so that the most common capacity for each drive is used.
+'''
+def ex_seven_five():
+    return (
+        full_data
+        .groupby("model", "capacity_bytes")
+        .agg(F.count("*").alias("occurences"))
+        .groupby("model")
+        .agg(F.max("occurences"))
+        .select("model", "capacity_bytes")
+    ).show()

@@ -4,10 +4,10 @@ import pyspark.sql.functions as F
 
 DATA_DIRECTORY = "../data/backblaze/"
 DATA_FILES = [
-    "drive_stats_2019_Q1",
-    "data_Q2_2019",
-    "data_Q3_2019",
-    "data_Q4_2019",
+    "drive_stats_2019_Q1"#,
+    #"data_Q2_2019",
+    #"data_Q3_2019",
+    #"data_Q4_2019",
 ]
 data = [
     spark.read.csv(DATA_DIRECTORY + file, header=True, inferSchema=True)
