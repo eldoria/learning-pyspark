@@ -153,11 +153,22 @@ If you look at the data, you’ll see that some drive models can report an erron
 stage, restage the full_data data frame so that the most common capacity for each drive is used.
 '''
 def ex_seven_five():
-    return (
+    capacity_count = (
         full_data
         .groupby("model", "capacity_bytes")
-        .agg(F.count("*").alias("occurences"))
+        .agg(F.count("*").alias("count_occurences"))
+    )
+    most_common_occurence = (
+        capacity_count
         .groupby("model")
-        .agg(F.max("occurences"))
-        .select("model", "capacity_bytes")
-    ).show()
+        .agg(F.max("count_occurences").alias("max_occurences"))
+    )
+
+    return(
+        most_common_occurence
+        .join(
+            capacity_count,
+            (capacity_count["model"] == most_common_occurence["model"]) &
+            (capacity_count["count_occurences"] == most_common_occurence["max_occurences"])
+        )
+    ).select(most_common_occurence["model"], "capacity_bytes").show()
