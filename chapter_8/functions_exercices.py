@@ -123,15 +123,40 @@ def ex_eight_five():
     frac_df = frac_df.withColumn(
         "fraction + 1/10", fraction_addition(F.col("fraction"), F.col("fraction 1/10"))
     )
+    frac_df.show(20)
 
 
-@F.udf(T.FractionalType)
+@F.udf(T.ArrayType(T.LongType()))
 def fraction_addition(frac1: Frac, frac2: Frac) -> Optional[Frac]:
     """Transforms a fraction represented as a 2-tuple of integers into a float."""
     num1, denom1 = frac1
     num2, denom2 = frac2
 
     if denom1 and denom2:
-        answer = Fraction(num1+num2, denom1+denom2)
+        answer = Fraction(num1, denom1) + Fraction(num2, denom2)
         return answer.numerator, answer.denominator
     return None
+
+
+'''
+ex 8.6:
+
+Because of the LongType(), the py_reduce_fraction (see the previous exercise) will
+not work if the numerator or denominator exceeds pow(2, 63)-1 or is lower than
+-pow(2, 63). Modify the py_reduce_fraction to return None if this is the case.
+Bonus: Does this change the type annotation provided? Why?
+'''
+def ex_eight_six():
+    print(reduce_fraction((pow(2, 63), 1)))
+
+
+def reduce_fraction(frac: Frac) -> Optional[Frac]:
+    """Reduce a fraction represented as a 2-tuple of integers."""
+    num, denom = frac
+    if not denom:
+        return None
+    answer = Fraction(num, denom)
+    if answer.numerator >= pow(2, 63) or answer.numerator < -pow(2, 63) \
+            or answer.denominator >= pow(2, 63) or answer.denominator <= -pow(2, 63):
+        return None
+    return answer.numerator, answer.denominator
